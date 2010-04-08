@@ -3,7 +3,7 @@
 Plugin Name: Syntax Highlighter for WordPress
 Plugin URI: http://wppluginsj.sourceforge.jp/syntax-highlighter/
 Description: 100% JavaScript syntax highlighter This plugin makes using the <a href="http://alexgorbatchev.com/wiki/SyntaxHighlighter">Syntax highlighter 2.1</a> to highlight code snippets within WordPress simple. Supports Bash, C++, C#, CSS, Delphi, Java, JavaScript, PHP, Python, Ruby, SQL, VB, VB.NET, XML, and (X)HTML.
-Version: 2.1.364
+Version: 2.1.364.1
 Author: wokamoto
 Author URI: http://dogmap.jp/
 Text Domain: syntax-highlighter
@@ -295,7 +295,7 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 		$js_out .= 'noBrush="' . __("Can't find brush for: ", $this->textdomain_name) . '";';
 		$js_out .= 'brushNotHtmlScript="' . __("Brush wasn't made for html-script option: ", $this->textdomain_name) . '";';
 		$js_out .= '}';
-		$js_out .= "SyntaxHighlighter.clipboardSwf=\"{$this->plugin_url}js/clipboard.swf\";\n";
+		$js_out .= "SyntaxHighlighter.config.clipboardSwf=\"{$this->plugin_url}js/clipboard.swf\";\n";
 		$js_out .= "SyntaxHighlighter.all();\n";
 
 		$this->writeScript($js_out, 'footer');
@@ -378,8 +378,14 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 		}
 		$pattern .= ')[^\]]*\]/im';
 		$found = array();
+		$hasTeaser = !( is_single() || is_page() );
 		foreach($wp_query->posts as $key => $post) {
 			$post_content = isset($post->post_content) ? $post->post_content : '';
+			if ( $hasTeaser && preg_match('/<!--more(.*?)?-->/', $post_content, $matches) ) {
+				$content = explode($matches[0], $post_content, 2);
+				$post_content = $content[0];
+			}
+
 			if (!empty($post_content) && preg_match_all($pattern, $post_content, $matches, PREG_SET_ORDER)) {
 				foreach ((array) $matches as $match) {
 					$found[$match[1]] = true;
