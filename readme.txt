@@ -19,6 +19,13 @@ Feature summary
 * Wide browser support
 * Very lightweight
 
+= Localization =
+
+* Japanese (ja) - [OKAMOTO Wataru](http://dogmap.jp/ "dogmap.jp") (plugin author)
+* Dutch (nl_NL) - [Rene](http://wpwebshop.com/blog "WPWebshop Blog")
+
+If you have translated into your language, please let me know.
+
 == Installation ==
 
 1. Upload the entire `syntax-highlighter` folder to the `/wp-content/plugins/` directory.
