@@ -4,7 +4,7 @@ Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_donations&business=9S8AJ
 Tags: CSS, html, xhtml, php, JavaScript, highlighter, syntax, sourcecode, code
 Requires at least: 2.5
 Tested up to: 2.9.2
-Stable tag: 2.1.364.1
+Stable tag: 2.1.364.2
 
 100% JavaScript syntax highlighter This plugin makes using the SyntaxHighlighter to highlight code snippets within WordPress simple.
 
@@ -23,6 +23,7 @@ Feature summary
 
 * Japanese (ja) - [OKAMOTO Wataru](http://dogmap.jp/ "dogmap.jp") (plugin author)
 * Dutch (nl_NL) - [Rene](http://wpwebshop.com/blog "WPWebshop Blog")
+* German (de_DE) - [Rian Klijn](http://www.creditriskmanager.com/ "Credit Risk Manager")
 
 If you have translated into your language, please let me know.
 

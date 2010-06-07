@@ -3,7 +3,7 @@
 Plugin Name: Syntax Highlighter for WordPress
 Plugin URI: http://wppluginsj.sourceforge.jp/syntax-highlighter/
 Description: 100% JavaScript syntax highlighter This plugin makes using the <a href="http://alexgorbatchev.com/wiki/SyntaxHighlighter">Syntax highlighter 2.1</a> to highlight code snippets within WordPress simple. Supports Bash, C++, C#, CSS, Delphi, Java, JavaScript, PHP, Python, Ruby, SQL, VB, VB.NET, XML, and (X)HTML.
-Version: 2.1.364.1
+Version: 2.1.364.2
 Author: wokamoto
 Author URI: http://dogmap.jp/
 Text Domain: syntax-highlighter
@@ -141,15 +141,20 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 			"xhtml" => array(false, 'XHTML') ,
 			"xslt" => array(false, 'XSLT') ,
 			);
+
+		add_action('wp_head', array(&$this, 'add_head'));
 	}
 
 	function add_head() {
-		$found = $this->haveShortCode();
-		if ($found !== FALSE) {
-			echo "<link href=\"{$this->plugin_url}css/shCore.css?ver={$this->plugin_ver}\" type=\"text/css\" rel=\"stylesheet\" media=\"all\" />\n";
-			echo "<link href=\"{$this->plugin_url}css/sh{$this->theme}.css?ver={$this->plugin_ver}\" type=\"text/css\" rel=\"stylesheet\" media=\"all\" />\n";
-			add_filter('the_content', array(&$this, 'parse_shortcodes'), 7);
-			add_action('wp_footer', array(&$this, 'add_footer'));
+		if ( $this->haveShortCode() !== FALSE ) {
+			if ( !$this->isKtai() ) {
+				echo "<link href=\"{$this->plugin_url}css/shCore.css?ver={$this->plugin_ver}\" type=\"text/css\" rel=\"stylesheet\" media=\"all\" />\n";
+				echo "<link href=\"{$this->plugin_url}css/sh{$this->theme}.css?ver={$this->plugin_ver}\" type=\"text/css\" rel=\"stylesheet\" media=\"all\" />\n";
+				add_filter('the_content', array(&$this, 'parse_shortcodes'), 7);
+				add_action('wp_footer', array(&$this, 'add_footer'));
+			} else {
+				$this->add_shortcodes();
+			}
 		}
 	}
 
@@ -444,6 +449,15 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 		$shortcode_tags_org = $shortcode_tags;
 		remove_all_shortcodes();
 
+		$this->add_shortcodes();
+		$content = do_shortcode( $content );
+
+		$shortcode_tags = $shortcode_tags_org;
+
+		return $content;
+	}
+
+	function add_shortcodes() {
 		add_shortcode('code', array(&$this, 'Shortcode_code'));
 		foreach ($this->target as $val) {
 			add_shortcode($val, array(&$this, 'Shortcode_' . strtolower($val)));
@@ -452,17 +466,8 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 			if (strtoupper($val) !== $val)
 				add_shortcode(strtoupper($val), array(&$this, 'Shortcode_' . strtolower($val)));
 		}
-		$content = do_shortcode( $content );
-
-		$shortcode_tags = $shortcode_tags_org;
-
-		return $content;
 	}
 }
 
-$sh = new SyntaxHighlighter();
-
-add_action('wp_head', array(&$sh, 'add_head'));
-
-unset($sh);
+new SyntaxHighlighter();
 ?>
