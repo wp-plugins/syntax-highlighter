@@ -3,8 +3,16 @@
 // Require wp-load.php or wp-config.php
 //**************************************************************************************
 if(!function_exists('get_option')) {
-	$path = (defined('ABSPATH') ? ABSPATH : dirname(dirname(dirname(dirname(dirname(__FILE__))))) . '/');
-	require_once(file_exists($path.'wp-load.php') ? $path.'wp-load.php' : $path.'wp-config.php');
+	$path = (
+		defined('ABSPATH')
+		? ABSPATH
+		: dirname(dirname(dirname(dirname(dirname(__FILE__))))) . '/'
+		);
+	require_once(
+		file_exists($path.'wp-load.php')
+		? $path.'wp-load.php'
+		: $path.'wp-config.php'
+		);
 }
 
 //**************************************************************************************
@@ -19,13 +27,12 @@ class wokController {
 	var $admin_option, $admin_action, $admin_hook;
 	var $note, $error;
 	var $charset;
-	var $wp25, $wp26, $wp27, $wp28, $wp29;
+	var $wp25, $wp26, $wp27, $wp28, $wp29, $wp30;
 
-	var $jquery_js  = 'includes/js/jquery-1.3.2.min.js';
-	var $jquery_ver = '1.3.2';
+	var $jquery_js  = 'includes/js/jquery-1.4.2.min.js';
+	var $jquery_ver = '1.4.2';
 
 	var $jquery_noconflict_js = 'includes/js/jquery.noconflict.js';
-	var $forChrome_js = 'includes/js/jquery.browser.chrome.min.js';
 
 	/*
 	* initialize
@@ -39,6 +46,7 @@ class wokController {
 		$this->wp27    = version_compare($wp_version, "2.7", ">=");
 		$this->wp28    = version_compare($wp_version, "2.8", ">=");
 		$this->wp29    = version_compare($wp_version, "2.9", ">=");
+		$this->wp30    = version_compare($wp_version, "3.0", ">=");
 
 		$this->setPluginDir($file);
 		$this->loadTextdomain();
@@ -133,26 +141,34 @@ class wokController {
 
 	// Add Admin Option Page
 	function addOptionPage($page_title, $function, $capability = 9, $menu_title = '', $file = '') {
-		if ($menu_title == '') $menu_title = $page_title;
-		if ($file == '') $file = $this->plugin_file;
+		if ($menu_title == '')
+			$menu_title = $page_title;
+		if ($file == '')
+			$file = $this->plugin_file;
 		$this->admin_hook['option'] = add_options_page($page_title, $menu_title, $capability, $file, $function);
 	}
 
 	function addManagementPage($page_title, $function, $capability = 9, $menu_title = '', $file = '') {
-		if ($menu_title == '') $menu_title = $page_title;
-		if ($file == '') $file = $this->plugin_file;
+		if ($menu_title == '')
+			$menu_title = $page_title;
+		if ($file == '')
+			$file = $this->plugin_file;
 		$this->admin_hook['management'] = add_management_page($page_title, $menu_title, $capability, $file, $function);
 	}
 
 	function addThemePage($page_title, $function, $capability = 9, $menu_title = '', $file = '') {
-		if ($menu_title == '') $menu_title = $page_title;
-		if ($file == '') $file = $this->plugin_file;
+		if ($menu_title == '')
+			$menu_title = $page_title;
+		if ($file == '')
+			$file = $this->plugin_file;
 		$this->admin_hook['theme'] = add_theme_page($page_title, $menu_title, $capability, $file, $function);
 	}
 
 	function addSubmenuPage($parent, $page_title, $function, $capability = 9, $menu_title = '', $file = '') {
-		if ($menu_title == '') $menu_title = $page_title;
-		if ($file == '') $file = $this->plugin_file;
+		if ($menu_title == '')
+			$menu_title = $page_title;
+		if ($file == '')
+			$file = $this->plugin_file;
 		$this->admin_hook[$parent] = add_submenu_page($parent, $page_title, $menu_title, $capability, $file, $function);
 	}
 
@@ -206,20 +222,20 @@ class wokController {
 	// Output Javascript
 	function writeScript($out = '', $place = 'head') {
 		global $wok_script_manager;
-		if ($out == '' || !isset($wok_script_manager)) return;
+		if ($out == '' || !isset($wok_script_manager))
+			return;
 		add_filter($place.'_script/manageScripts', create_function('$js', 'return $js . "'.addcslashes($out,'"').'";'));
 	}
 
 	// Regist jQuery
 	function addjQuery() {
-		if (function_exists('wp_register_script')) {
-			global $wok_script_manager;
-			if (!isset($wok_script_manager)) return false;
+		global $wok_script_manager;
+		if (!isset($wok_script_manager))
+			return false;
 
+		if (function_exists('wp_register_script')) {
 			$wok_script_manager->registerScript('jquery', $this->plugin_url.$this->jquery_js, false, $this->jquery_ver);
 			wp_enqueue_script('jquery');
-			if (eregi("chrome", $_SERVER['HTTP_USER_AGENT']))
-				wp_enqueue_script('jquery.chrome', $this->plugin_url.$this->forChrome_js, array('jquery'), $this->jquery_ver);
 			add_filter('print_scripts_array', array($this, 'jQueryNoConflict'), 11);
 			return true;
 		} else {
@@ -231,7 +247,8 @@ class wokController {
 	function jQueryNoConflict($args) {
 		if (function_exists('wp_register_script')) {
 			global $wok_script_manager;
-			if (!isset($wok_script_manager)) return false;
+			if (!isset($wok_script_manager))
+				return false;
 
 			$jquerypos = array_search('jquery', $args);
 			if(false !== $jquerypos && in_array('prototype', $args)) {
@@ -285,7 +302,9 @@ class wokScriptManager {
 	}
 	function __construct() {
 		global $wp_scripts;
-		if (!is_a($wp_scripts, 'WP_Scripts')) $wp_scripts = new WP_Scripts();
+		if (!is_a($wp_scripts, 'WP_Scripts'))
+			$wp_scripts = new WP_Scripts();
+
 		add_action('admin_head', array($this, 'adminHeadPrintScript'), 11);
 		add_action('wp_head', array($this, 'headPrintScript'), 11);
 		add_action('wp_footer', array($this, 'footerPrintScript'), 11);
@@ -297,9 +316,12 @@ class wokScriptManager {
 		if (version_compare($wp_version, "2.6", ">=")) {
 			if (isset($wp_scripts->registered[$handle])) {
 				if (version_compare($wp_scripts->registered[$handle]->ver, $ver, '<')) {
-					if ($src  != '')     $wp_scripts->registered[$handle]->src  = $src;
-					if (is_array($deps)) $wp_scripts->registered[$handle]->deps = $deps;
-					if ($ver  != false)  $wp_scripts->registered[$handle]->ver  = $ver;
+					if ($src  != '')
+						$wp_scripts->registered[$handle]->src  = $src;
+					if (is_array($deps))
+						$wp_scripts->registered[$handle]->deps = $deps;
+					if ($ver  != false)
+						$wp_scripts->registered[$handle]->ver  = $ver;
 				}
 			} else {
 				wp_register_script($handle, $src, $deps, $ver);
@@ -307,9 +329,12 @@ class wokScriptManager {
 		} else {
 			if (isset($wp_scripts->scripts[$handle])) {
 				if (version_compare($wp_scripts->scripts[$handle]->ver, $ver, '<')) {
-					if ($src  != '')     $wp_scripts->scripts[$handle]->src  = $src;
-					if (is_array($deps)) $wp_scripts->scripts[$handle]->deps = $deps;
-					if ($ver  != false)  $wp_scripts->scripts[$handle]->ver  = $ver;
+					if ($src  != '')
+						$wp_scripts->scripts[$handle]->src  = $src;
+					if (is_array($deps))
+						$wp_scripts->scripts[$handle]->deps = $deps;
+					if ($ver  != false)
+						$wp_scripts->scripts[$handle]->ver  = $ver;
 				}
 			} else {
 				wp_register_script($handle, $src, $deps, $ver);
