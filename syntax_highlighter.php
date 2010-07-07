@@ -290,7 +290,7 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 //		$js_out .= "dp.SyntaxHighlighter.HighlightAll('code');\n";
 
 //		-- for SyntaxHighlighter 2.0.x
-		$js_out .= 'with(SyntaxHighlighter.config.strings){';
+		$js_out  = 'with(SyntaxHighlighter.config.strings){';
 		$js_out .= 'expandSource="' . __('+ expand source', $this->textdomain_name) . '";';
 		$js_out .= 'viewSource="' . __('view plain', $this->textdomain_name) . '";';
 		$js_out .= 'copyToClipboard="' . __('copy to clipboard', $this->textdomain_name) . '";';
