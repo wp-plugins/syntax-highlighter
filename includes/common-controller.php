@@ -140,7 +140,7 @@ class wokController {
 	}
 
 	// Add Admin Option Page
-	function addOptionPage($page_title, $function, $capability = 9, $menu_title = '', $file = '') {
+	function addOptionPage($page_title, $function, $capability = 'administrator', $menu_title = '', $file = '') {
 		if ($menu_title == '')
 			$menu_title = $page_title;
 		if ($file == '')
@@ -148,7 +148,7 @@ class wokController {
 		$this->admin_hook['option'] = add_options_page($page_title, $menu_title, $capability, $file, $function);
 	}
 
-	function addManagementPage($page_title, $function, $capability = 9, $menu_title = '', $file = '') {
+	function addManagementPage($page_title, $function, $capability = 'administrator', $menu_title = '', $file = '') {
 		if ($menu_title == '')
 			$menu_title = $page_title;
 		if ($file == '')
@@ -156,7 +156,7 @@ class wokController {
 		$this->admin_hook['management'] = add_management_page($page_title, $menu_title, $capability, $file, $function);
 	}
 
-	function addThemePage($page_title, $function, $capability = 9, $menu_title = '', $file = '') {
+	function addThemePage($page_title, $function, $capability = 'administrator', $menu_title = '', $file = '') {
 		if ($menu_title == '')
 			$menu_title = $page_title;
 		if ($file == '')
@@ -164,7 +164,7 @@ class wokController {
 		$this->admin_hook['theme'] = add_theme_page($page_title, $menu_title, $capability, $file, $function);
 	}
 
-	function addSubmenuPage($parent, $page_title, $function, $capability = 9, $menu_title = '', $file = '') {
+	function addSubmenuPage($parent, $page_title, $function, $capability = 'administrator', $menu_title = '', $file = '') {
 		if ($menu_title == '')
 			$menu_title = $page_title;
 		if ($file == '')
@@ -172,11 +172,11 @@ class wokController {
 		$this->admin_hook[$parent] = add_submenu_page($parent, $page_title, $menu_title, $capability, $file, $function);
 	}
 
-	function addMediaPage($page_title, $function, $capability = 9, $menu_title = '', $file = '') {
+	function addMediaPage($page_title, $function, $capability = 'administrator', $menu_title = '', $file = '') {
 		$this->addSubmenuPage(($this->wp27 ? 'upload.php' : 'edit.php'), $page_title, $function, $capability, $menu_title, $file);
 	}
 
-	function addEditPage($page_title, $function, $capability = 9, $menu_title = '', $file = '') {
+	function addEditPage($page_title, $function, $capability = 'administrator', $menu_title = '', $file = '') {
 		$this->addSubmenuPage('edit.php', $page_title, $function, $capability, $menu_title, $file);
 	}
 
