@@ -28,6 +28,7 @@ class wokController {
 	var $note, $error;
 	var $charset;
 	var $wp25, $wp26, $wp27, $wp28, $wp29, $wp30;
+	var $inline_js;
 
 	var $jquery_js  = 'includes/js/jquery-1.4.2.min.js';
 	var $jquery_ver = '1.4.2';
@@ -69,6 +70,12 @@ class wokController {
 
 		if (!isset($wok_script_manager) && class_exists('wokScriptManager'))
 			$wok_script_manager = new wokScriptManager();
+
+		$this->inline_js        = array(
+			'admin_head' => '',
+			'head' => '',
+			'footer' => '',
+			);
 	}
 
 	function setPluginDir($file) {
@@ -220,11 +227,15 @@ class wokController {
 	}
 
 	// Output Javascript
+	function scriptConcat($js, $place) {
+		return $js . $this->inline_js[$place];
+	}
 	function writeScript($out = '', $place = 'head') {
 		global $wok_script_manager;
 		if ($out == '' || !isset($wok_script_manager))
 			return;
-		add_filter($place.'_script/manageScripts', create_function('$js', 'return $js . "'.addcslashes($out,'"').'";'));
+		$this->inline_js[$place] .= $out;
+		add_filter($place.'_script/manageScripts', array(&$this, "scriptConcat"), 10, 2);
 	}
 
 	// Regist jQuery
@@ -356,15 +367,15 @@ class wokScriptManager {
 	}
 
 	function adminHeadPrintScript() {
-		$this->printScript(apply_filters('admin_head_script/manageScripts', ''));
+		$this->printScript(apply_filters('admin_head_script/manageScripts', '', 'admin_head'));
 	}
 
 	function headPrintScript() {
-		$this->printScript(apply_filters('head_script/manageScripts', ''));
+		$this->printScript(apply_filters('head_script/manageScripts', '', 'head'));
 	}
 
 	function footerPrintScript() {
-		$this->printScript(apply_filters('footer_script/manageScripts', ''));
+		$this->printScript(apply_filters('footer_script/manageScripts', '', 'footer'));
 	}
 }
 endif;
