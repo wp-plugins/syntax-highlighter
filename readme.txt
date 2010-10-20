@@ -10,7 +10,7 @@ Stable tag: 3.0.83
 
 == Description ==
 
-This plugin easily integrates the [SyntaxHighlighter](http://alexgorbatchev.com/wiki/SyntaxHighlighter "SyntaxHighlighter - Alex Gorbatchev") by Alex Gorbatchev into WordPress.
+This plugin easily integrates the [SyntaxHighlighter](http://alexgorbatchev.com/SyntaxHighlighter "SyntaxHighlighter - Alex Gorbatchev") by Alex Gorbatchev into WordPress.
 Supports AS3, Bash, C, C++, C#, ColdFusion, CSS, Delphi, diff, Erlang, Groovy, Java, JavaScript, JavaFX, Perl, PHP, Plain Text, Python, PowerShell, Ruby, Scala, SQL, VB, VB.NET, XML, and (X)HTML. 
 Feature summary
 
@@ -63,15 +63,9 @@ Languages Supported
 * Visual Basic (vb, vbnet)
 * XML/HTML (xml, html, xhtml, xslt)
 
-== Frequently Asked Questions ==
-
-none
-
-== Screenshots ==
-
-none
-
 == Changelog == 
+
+**3.0.83 - October 20, 2010**  
 
 **2.1.364 - February 18, 2010**  
 Initial release.

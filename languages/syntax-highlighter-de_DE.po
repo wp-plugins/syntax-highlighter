@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: syntax-highlighter\n"
 "POT-Creation-Date: 2008-10-29 16:36+0900\n"
 "PO-Revision-Date: \n"
-"Last-Translator: Rian van Spaandonk <rian.vanspaandonk@pangaea.nl>\n"
+"Last-Translator: wokamoto <wokamoto1973@gmail.com>\n"
 "Language-Team: \n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -14,8 +14,8 @@ msgstr ""
 "X-Poedit-SourceCharset: utf-8\n"
 
 # description
-msgid "100% JavaScript syntax highlighter This plugin makes using the <a href=\"http://alexgorbatchev.com/wiki/SyntaxHighlighter\">Syntax highlighter 2.1</a> to highlight code snippets within WordPress simple. Supports Bash, C++, C#, CSS, Delphi, Java, JavaScript, PHP, Python, Ruby, SQL, VB, VB.NET, XML, and (X)HTML."
-msgstr "100% JavaScript syntax highlighter. Dieses Plug-In vereinfacht die Verwendung vom <a href=\"http://alexgorbatchev.com/wiki/SyntaxHighlighter\">Syntax highlighter 2.1</a> f&uuml;r die Markierung von Codeausschnitte in WordPress. Unterst&uuml;tzt Bash, C++, C#, CSS, Delphi, Java, JavaScript, PHP, Python, Ruby, SQL, VB, VB.NET, XML und (X)HTML."
+msgid "100% JavaScript syntax highlighter This plugin makes using the <a href=\"http://alexgorbatchev.com/SyntaxHighlighter\">Syntax highlighter</a> to highlight code snippets within WordPress simple. Supports Bash, C++, C#, CSS, Delphi, Java, JavaScript, PHP, Python, Ruby, SQL, VB, VB.NET, XML, and (X)HTML."
+msgstr "100% JavaScript syntax highlighter. Dieses Plug-In vereinfacht die Verwendung vom <a href=\"http://alexgorbatchev.com/SyntaxHighlighter\">Syntax highlighter</a> f&uuml;r die Markierung von Codeausschnitte in WordPress. Unterst&uuml;tzt Bash, C++, C#, CSS, Delphi, Java, JavaScript, PHP, Python, Ruby, SQL, VB, VB.NET, XML und (X)HTML."
 
 #: ../syntax_highlighter.php:131
 msgid "+ expand source"
@@ -51,3 +51,4 @@ msgstr "Pinsel nicht geeignet f&uuml;r HTML-Skript Option:"
 
 #~ msgid "SyntaxHighlighter\\n\\n"
 #~ msgstr "SyntaxHighlighter\\n\\n"
+

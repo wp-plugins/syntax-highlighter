@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: syntax-highlighter\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2009-02-12 11:19+0900\n"
-"PO-Revision-Date: 2010-02-18 16:22+0900\n"
+"PO-Revision-Date: 2010-10-20 18:30+0900\n"
 "Last-Translator: wokamoto <wokamoto1973@gmail.com>\n"
 "Language-Team: JAPANESE <http://wppluginsj.sourceforge.jp/>\n"
 "MIME-Version: 1.0\n"
@@ -17,8 +17,8 @@ msgstr ""
 "X-Poedit-SearchPath-0: ..\n"
 
 # description
-msgid "100% JavaScript syntax highlighter This plugin makes using the <a href=\"http://alexgorbatchev.com/wiki/SyntaxHighlighter\">Syntax highlighter 2.1</a> to highlight code snippets within WordPress simple. Supports Bash, C++, C#, CSS, Delphi, Java, JavaScript, PHP, Python, Ruby, SQL, VB, VB.NET, XML, and (X)HTML."
-msgstr "JavaScript で記述された <a href=\"http://alexgorbatchev.com/wiki/SyntaxHighlighter\">Syntax highlighter 2.1</a> を使用してソースコードをハイライト表示します。対応している言語は Bash, C++, C#, CSS, Delphi, Java, JavaScript, PHP, Python, Ruby, SQL, VB, VB.NET, XML, and (X)HTML などです。"
+msgid "100% JavaScript syntax highlighter This plugin makes using the <a href=\"http://alexgorbatchev.com/SyntaxHighlighter\">Syntax highlighter</a> to highlight code snippets within WordPress simple. Supports Bash, C++, C#, CSS, Delphi, Java, JavaScript, PHP, Python, Ruby, SQL, VB, VB.NET, XML, and (X)HTML."
+msgstr "JavaScript で記述された <a href=\"http://alexgorbatchev.com/SyntaxHighlighter\">Syntax highlighter</a> を使用してソースコードをハイライト表示します。対応している言語は Bash, C++, C#, CSS, Delphi, Java, JavaScript, PHP, Python, Ruby, SQL, VB, VB.NET, XML, and (X)HTML などです。"
 
 #: ../syntax_highlighter.php:131
 msgid "+ expand source"
