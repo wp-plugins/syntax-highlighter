@@ -3,7 +3,7 @@
 Plugin Name: Syntax Highlighter for WordPress
 Plugin URI: http://wppluginsj.sourceforge.jp/syntax-highlighter/
 Description: 100% JavaScript syntax highlighter This plugin makes using the <a href="http://alexgorbatchev.com/wiki/SyntaxHighlighter">Syntax highlighter 2.1</a> to highlight code snippets within WordPress simple. Supports Bash, C++, C#, CSS, Delphi, Java, JavaScript, PHP, Python, Ruby, SQL, VB, VB.NET, XML, and (X)HTML.
-Version: 2.1.364.4
+Version: 3.0.83
 Author: wokamoto
 Author URI: http://dogmap.jp/
 Text Domain: syntax-highlighter
@@ -30,10 +30,12 @@ License:
     Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 Includes:
- SyntaxHighlighter Ver.2.1.364
-  http://alexgorbatchev.com/
-  Copyright (C) 2004-2009 Alex Gorbatchev.
-  Licensed under The GNU LESSER GENERAL PUBLIC LICENSE
+ SyntaxHighlighter Ver.3.0.83 (July 02 2010)
+  http://alexgorbatchev.com/SyntaxHighlighter
+  SyntaxHighlighter is donationware. If you are using it, please donate.
+  http://alexgorbatchev.com/SyntaxHighlighter/donate.html
+  Copyright (C) 2004-2010 Alex Gorbatchev.
+  Dual licensed under the MIT and GPL licenses.
 
 */
 if (is_admin())
@@ -43,7 +45,7 @@ if (!class_exists('wokController') || !class_exists('wokScriptManager'))
 	require(dirname(__FILE__).'/includes/common-controller.php');
 
 class SyntaxHighlighter extends wokController {	/* Start Class */
-	var $plugin_ver = '2.1.364';
+	var $plugin_ver = '3.0.83';
 
 	var $theme = 'ThemeDefault';
 	var $default_atts = array(
@@ -143,18 +145,17 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 			);
 
 		add_action('wp_head', array(&$this, 'add_head'));
+
+		if ( $this->isKtai() )
+			$this->add_shortcodes();
 	}
 
 	function add_head() {
-		if ( $this->haveShortCode() !== FALSE ) {
-			if ( !$this->isKtai() ) {
-				echo "<link href=\"{$this->plugin_url}css/shCore.css?ver={$this->plugin_ver}\" type=\"text/css\" rel=\"stylesheet\" media=\"all\" />\n";
-				echo "<link href=\"{$this->plugin_url}css/sh{$this->theme}.css?ver={$this->plugin_ver}\" type=\"text/css\" rel=\"stylesheet\" media=\"all\" />\n";
-				add_filter('the_content', array(&$this, 'parse_shortcodes'), 7);
-				add_action('wp_footer', array(&$this, 'add_footer'));
-			} else {
-				$this->add_shortcodes();
-			}
+		if ( $this->haveShortCode() !== FALSE && !$this->isKtai() ) {
+			echo "<link href=\"{$this->plugin_url}css/shCore.css?ver={$this->plugin_ver}\" type=\"text/css\" rel=\"stylesheet\" media=\"all\" />\n";
+			echo "<link href=\"{$this->plugin_url}css/sh{$this->theme}.css?ver={$this->plugin_ver}\" type=\"text/css\" rel=\"stylesheet\" media=\"all\" />\n";
+			add_filter('the_content', array(&$this, 'parse_shortcodes'), 7);
+			add_action('wp_footer', array(&$this, 'add_footer'));
 		}
 	}
 
@@ -279,29 +280,35 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 
 		echo $scripts;
 
-//		-- for SyntaxHighlighter 1.5.x
-//		$js_out  = "dp.SyntaxHighlighter.Toolbar.Commands.About.label='" . __('?', $this->textdomain_name) . "';";
-//		$js_out .= "dp.SyntaxHighlighter.Toolbar.Commands.CopyToClipboard.label='" . __('copy to clipboard', $this->textdomain_name) . "';";
-//		$js_out .= "dp.SyntaxHighlighter.Toolbar.Commands.CopyToClipboard.func=function(B,A){var D=A.originalCode;var w=window,d=document;if(w.clipboardData){w.clipboardData.setData('text',D)}else{if(dp.sh.ClipboardSwf!=null){var C=A.flashCopier;if(C==null){C=d.createElement('div');A.flashCopier=C;A.div.appendChild(C)}C.innerHTML='<embed src=\"'+dp.sh.ClipboardSwf+'\" FlashVars=\"clipboard='+encodeURIComponent(D)+'\" width=\"0\" height=\"0\" type=\"application/x-shockwave-flash\"></embed>'}}alert(\"" . __('The code is in your clipboard now', $this->textdomain_name) . "\")};";
-//		$js_out .= "dp.SyntaxHighlighter.Toolbar.Commands.ExpandSource.label='" . __('+ expand source', $this->textdomain_name) . "';";
-//		$js_out .= "dp.SyntaxHighlighter.Toolbar.Commands.PrintSource.label='" . __('print', $this->textdomain_name) . "';";
-//		$js_out .= "dp.SyntaxHighlighter.Toolbar.Commands.ViewSource.label='" . __('view plain', $this->textdomain_name) . "';";
-//		$js_out .= "dp.SyntaxHighlighter.ClipboardSwf = '{$this->plugin_url}js/clipboard.swf';\n";
-//		$js_out .= "dp.SyntaxHighlighter.HighlightAll('code');\n";
-
-//		-- for SyntaxHighlighter 2.0.x
-		$js_out  = 'with(SyntaxHighlighter.config.strings){';
-		$js_out .= 'expandSource="' . __('+ expand source', $this->textdomain_name) . '";';
-		$js_out .= 'viewSource="' . __('view plain', $this->textdomain_name) . '";';
-		$js_out .= 'copyToClipboard="' . __('copy to clipboard', $this->textdomain_name) . '";';
-		$js_out .= 'copyToClipboardConfirmation="' . __('The code is in your clipboard now', $this->textdomain_name) . '";';
-		$js_out .= 'print="' . __('print', $this->textdomain_name) . '";';
-		$js_out .= 'help="' . __('?', $this->textdomain_name) . '";';
-		$js_out .= 'noBrush="' . __("Can't find brush for: ", $this->textdomain_name) . '";';
-		$js_out .= 'brushNotHtmlScript="' . __("Brush wasn't made for html-script option: ", $this->textdomain_name) . '";';
-		$js_out .= '}';
-		$js_out .= "SyntaxHighlighter.config.clipboardSwf=\"{$this->plugin_url}js/clipboard.swf\";\n";
-		$js_out .= "SyntaxHighlighter.all();\n";
+		$js_out  = '';
+		if (version_compare($this->plugin_ver, "2.0", "<")) {
+			// -- for SyntaxHighlighter 1.5.x
+			$js_out .= "dp.SyntaxHighlighter.Toolbar.Commands.About.label='" . __('?', $this->textdomain_name) . "';";
+			$js_out .= "dp.SyntaxHighlighter.Toolbar.Commands.CopyToClipboard.label='" . __('copy to clipboard', $this->textdomain_name) . "';";
+			$js_out .= "dp.SyntaxHighlighter.Toolbar.Commands.CopyToClipboard.func=function(B,A){var D=A.originalCode;var w=window,d=document;if(w.clipboardData){w.clipboardData.setData('text',D)}else{if(dp.sh.ClipboardSwf!=null){var C=A.flashCopier;if(C==null){C=d.createElement('div');A.flashCopier=C;A.div.appendChild(C)}C.innerHTML='<embed src=\"'+dp.sh.ClipboardSwf+'\" FlashVars=\"clipboard='+encodeURIComponent(D)+'\" width=\"0\" height=\"0\" type=\"application/x-shockwave-flash\"></embed>'}}alert(\"" . __('The code is in your clipboard now', $this->textdomain_name) . "\")};";
+			$js_out .= "dp.SyntaxHighlighter.Toolbar.Commands.ExpandSource.label='" . __('+ expand source', $this->textdomain_name) . "';";
+			$js_out .= "dp.SyntaxHighlighter.Toolbar.Commands.PrintSource.label='" . __('print', $this->textdomain_name) . "';";
+			$js_out .= "dp.SyntaxHighlighter.Toolbar.Commands.ViewSource.label='" . __('view plain', $this->textdomain_name) . "';";
+			$js_out .= "dp.SyntaxHighlighter.ClipboardSwf = '{$this->plugin_url}js/clipboard.swf';\n";
+			$js_out .= "dp.SyntaxHighlighter.HighlightAll('code');\n";
+		} elseif (version_compare($this->plugin_ver, "3.0", "<")) {
+			// -- for SyntaxHighlighter 2.x
+			$js_out .= 'with(SyntaxHighlighter.config.strings){';
+			$js_out .= 'expandSource="' . __('+ expand source', $this->textdomain_name) . '";';
+			$js_out .= 'viewSource="' . __('view plain', $this->textdomain_name) . '";';
+			$js_out .= 'copyToClipboard="' . __('copy to clipboard', $this->textdomain_name) . '";';
+			$js_out .= 'copyToClipboardConfirmation="' . __('The code is in your clipboard now', $this->textdomain_name) . '";';
+			$js_out .= 'print="' . __('print', $this->textdomain_name) . '";';
+			$js_out .= 'help="' . __('?', $this->textdomain_name) . '";';
+			$js_out .= 'noBrush="' . __("Can't find brush for: ", $this->textdomain_name) . '";';
+			$js_out .= 'brushNotHtmlScript="' . __("Brush wasn't made for html-script option: ", $this->textdomain_name) . '";';
+			$js_out .= '}';
+			$js_out .= "SyntaxHighlighter.config.clipboardSwf=\"{$this->plugin_url}js/clipboard.swf\";\n";
+			$js_out .= "SyntaxHighlighter.all();\n";
+		} else {
+			// -- for SyntaxHighlighter 3.x
+			$js_out .= "SyntaxHighlighter.all();\n";
+		}
 
 		$this->writeScript($js_out, 'footer');
 	}
@@ -339,13 +346,20 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 				;
 		}
 
-		$outTxt .= '<pre'
-//		-- for SyntaxHighlighter 1.5.x
-//			. ' name="code"'
-//			. ' class="'.$startTag.($pVal > 1 ? ":firstLine[{$pVal}]" : '').'"'
-
-//		-- for SyntaxHighlighter 2.0.x
-			. ' class="'
+		if (version_compare($this->plugin_ver, "2.0", "<")) {
+			// -- for SyntaxHighlighter 1.5.x
+			$outTxt .= '<pre'
+				. ' name="code"'
+				. ' class="'.$startTag.($pVal > 1 ? ":firstLine[{$pVal}]" : '').'"'
+				. '>'
+				. $inTxt
+				. '</pre>'
+				. "\n\n"
+				;
+		} else {
+			// -- for SyntaxHighlighter 2.x or 3.x
+			$outTxt .= '<pre'
+				. ' class="'
 				. "brush: {$startTag};"
 				. ($pVal > 1 ? " first-line: {$pVal};" : '')
 				. (!empty($highlight_lines) ? " highlight: [{$highlight_lines}];" : '')
@@ -359,11 +373,12 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 				. (strtolower($light) == 'true' ? ' light: true;' : '')
 				. ($font_size != '100%' ? " font-size: {$font_size};" : '')
 				. '"'
-			. '>'
-			. $inTxt
-			. '</pre>'
-			. "\n\n"
-			;
+				. '>'
+				. $inTxt
+				. '</pre>'
+				. "\n\n"
+				;
+		}
 
 		return $outTxt;
 	}
