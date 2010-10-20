@@ -10,7 +10,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 # description
-msgid "100% JavaScript syntax highlighter This plugin makes using the <a href=\"http://alexgorbatchev.com/wiki/SyntaxHighlighter\">Syntax highlighter 2.1</a> to highlight code snippets within WordPress simple. Supports Bash, C++, C#, CSS, Delphi, Java, JavaScript, PHP, Python, Ruby, SQL, VB, VB.NET, XML, and (X)HTML."
+msgid "100% JavaScript syntax highlighter This plugin makes using the <a href=\"http://alexgorbatchev.com/SyntaxHighlighter\">Syntax highlighter</a> to highlight code snippets within WordPress simple. Supports Bash, C++, C#, CSS, Delphi, Java, JavaScript, PHP, Python, Ruby, SQL, VB, VB.NET, XML, and (X)HTML."
 msgstr ""
 
 #: ../syntax_highlighter.php:131
