@@ -24,6 +24,7 @@ Feature summary
 * Japanese (ja) - [OKAMOTO Wataru](http://dogmap.jp/ "dogmap.jp") (plugin author)
 * Dutch (nl_NL) - [Rene](http://wpwebshop.com/blog "WPWebshop Blog")
 * German (de_DE) - [Rian Klijn](http://www.creditriskmanager.com/ "Credit Risk Manager")
+* Simplified Chinese (zh-CN) - heartnn
 
 If you have translated into your language, please let me know.
 
