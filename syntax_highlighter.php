@@ -63,7 +63,7 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 		,'auto_link' => 'false'
 		,'font_size' => '100%'
 		,'encode' => 'false'
-	);
+		);
 
 	var $target = array(
 		'AS3' ,
@@ -98,8 +98,13 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 		'XSLT' ,
 		'HTML' ,
 		'C' ,
-	);
+		);
 	var $options;
+
+	var $haveShortCode = array(
+		'checked' => false,
+		'enabled' => false,
+		);
 
 	/*
 	* Constructor
@@ -144,16 +149,26 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 			"xslt" => array(false, 'XSLT') ,
 			);
 
+		add_action('wp_print_styles', array(&$this, 'add_stylesheet'));
 		add_action('wp_head', array(&$this, 'add_head'));
 
 		if ( $this->isKtai() )
 			$this->add_shortcodes();
 	}
 
+	function add_stylesheet() {
+		if ( function_exists('wp_enqueue_style') && $this->haveShortCode() !== FALSE && !$this->isKtai() ) {
+			wp_enqueue_style('shCore', $this->plugin_url.'css/shCore.css', array(), $this->plugin_ver, 'all');
+			wp_enqueue_style('sh'.$this->theme, $this->plugin_url."css/sh{$this->theme}.css", array('shCore'), $this->plugin_ver, 'all');
+		}
+	}
+
 	function add_head() {
 		if ( $this->haveShortCode() !== FALSE && !$this->isKtai() ) {
-			echo "<link href=\"{$this->plugin_url}css/shCore.css?ver={$this->plugin_ver}\" type=\"text/css\" rel=\"stylesheet\" media=\"all\" />\n";
-			echo "<link href=\"{$this->plugin_url}css/sh{$this->theme}.css?ver={$this->plugin_ver}\" type=\"text/css\" rel=\"stylesheet\" media=\"all\" />\n";
+			if (!function_exists('wp_enqueue_style')) {
+				echo "<link href=\"{$this->plugin_url}css/shCore.css?ver={$this->plugin_ver}\" type=\"text/css\" rel=\"stylesheet\" media=\"all\" />\n";
+				echo "<link href=\"{$this->plugin_url}css/sh{$this->theme}.css?ver={$this->plugin_ver}\" type=\"text/css\" rel=\"stylesheet\" media=\"all\" />\n";
+			}
 			add_filter('the_content', array(&$this, 'parse_shortcodes'), 7);
 			add_action('wp_footer', array(&$this, 'add_footer'));
 		}
@@ -164,7 +179,8 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 		foreach ($this->options as $key => $val) {
 			if ($val[0]) {$enabled = true; break;}
 		}
-		if (!$enabled) return;
+		if (!$enabled)
+			return;
 
 		$scripts  = "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shCore.js?ver={$this->plugin_ver}\"></script>\n";
 
@@ -293,16 +309,14 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 			$js_out .= "dp.SyntaxHighlighter.HighlightAll('code');\n";
 		} elseif (version_compare($this->plugin_ver, "3.0", "<")) {
 			// -- for SyntaxHighlighter 2.x
-			$js_out .= 'with(SyntaxHighlighter.config.strings){';
-			$js_out .= 'expandSource="' . __('+ expand source', $this->textdomain_name) . '";';
-			$js_out .= 'viewSource="' . __('view plain', $this->textdomain_name) . '";';
-			$js_out .= 'copyToClipboard="' . __('copy to clipboard', $this->textdomain_name) . '";';
-			$js_out .= 'copyToClipboardConfirmation="' . __('The code is in your clipboard now', $this->textdomain_name) . '";';
-			$js_out .= 'print="' . __('print', $this->textdomain_name) . '";';
-			$js_out .= 'help="' . __('?', $this->textdomain_name) . '";';
-			$js_out .= 'noBrush="' . __("Can't find brush for: ", $this->textdomain_name) . '";';
-			$js_out .= 'brushNotHtmlScript="' . __("Brush wasn't made for html-script option: ", $this->textdomain_name) . '";';
-			$js_out .= '}';
+			$js_out .= 'SyntaxHighlighter.config.strings.expandSource="' . __('+ expand source', $this->textdomain_name) . '";';
+			$js_out .= 'SyntaxHighlighter.config.strings.viewSource="' . __('view plain', $this->textdomain_name) . '";';
+			$js_out .= 'SyntaxHighlighter.config.strings.copyToClipboard="' . __('copy to clipboard', $this->textdomain_name) . '";';
+			$js_out .= 'SyntaxHighlighter.config.strings.copyToClipboardConfirmation="' . __('The code is in your clipboard now', $this->textdomain_name) . '";';
+			$js_out .= 'SyntaxHighlighter.config.strings.print="' . __('print', $this->textdomain_name) . '";';
+			$js_out .= 'SyntaxHighlighter.config.strings.help="' . __('?', $this->textdomain_name) . '";';
+			$js_out .= 'SyntaxHighlighter.config.strings.noBrush="' . __("Can't find brush for: ", $this->textdomain_name) . '";';
+			$js_out .= 'SyntaxHighlighter.config.strings.brushNotHtmlScript="' . __("Brush wasn't made for html-script option: ", $this->textdomain_name) . '";';
 			$js_out .= "SyntaxHighlighter.config.clipboardSwf=\"{$this->plugin_url}js/clipboard.swf\";\n";
 			$js_out .= "SyntaxHighlighter.all();\n";
 		} else {
@@ -390,6 +404,9 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 		if (is_admin())
 			return FALSE;
 
+		if ($this->haveShortCode['checked'])
+			return $this->haveShortCode['enabled'];
+
 		global $wp_query;
 
 		$pattern = '/\[(code';
@@ -415,7 +432,10 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 			unset($matches);
 		}
 
-		return (count($found) > 0 ? $found : FALSE);
+		$this->haveShortCode['checked'] = true;
+		$this->haveShortCode['enabled'] = (count($found) > 0 ? $found : FALSE);
+
+		return $this->haveShortCode['enabled'];
 	}
 
 	function Shortcode_code($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'code');}
