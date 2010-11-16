@@ -3,7 +3,7 @@
 Plugin Name: Syntax Highlighter for WordPress
 Plugin URI: http://wppluginsj.sourceforge.jp/syntax-highlighter/
 Description: 100% JavaScript syntax highlighter This plugin makes using the <a href="http://alexgorbatchev.com/SyntaxHighlighter">Syntax highlighter</a> to highlight code snippets within WordPress simple. Supports Bash, C++, C#, CSS, Delphi, Java, JavaScript, PHP, Python, Ruby, SQL, VB, VB.NET, XML, and (X)HTML.
-Version: 3.0.83
+Version: 3.0.83.1
 Author: wokamoto
 Author URI: http://dogmap.jp/
 Text Domain: syntax-highlighter
@@ -38,16 +38,17 @@ Includes:
   Dual licensed under the MIT and GPL licenses.
 
 */
-if (is_admin())
-	return false;
-
 if (!class_exists('wokController') || !class_exists('wokScriptManager'))
 	require(dirname(__FILE__).'/includes/common-controller.php');
 
 class SyntaxHighlighter extends wokController {	/* Start Class */
 	var $plugin_ver = '3.0.83';
+	var $version;
 
-	var $theme = 'ThemeDefault';
+	var $sh_versions = array( '3.0.83', '2.1.364' );
+	var $sh_themes   = array( 'Default', 'Django', 'Eclipse', 'Emacs', 'FadeToGrey', 'MDUltra', 'Midnight', 'RDark' );
+
+	var $theme = 'Default';
 	var $default_atts = array(
 		 'num' => 1
 		,'lang' => 'plain'
@@ -100,6 +101,7 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 		'C' ,
 		);
 	var $options;
+	var $languages;
 
 	var $haveShortCode = array(
 		'checked' => false,
@@ -115,189 +117,323 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 	function __construct() {
 		$this->init(__FILE__);
 
-		$this->options = array(
-			"as3"  => array(false, 'AS3') ,
-			"bash" => array(false, 'Bash') ,
-			"c" => array(false, 'C') ,
-			"cpp" => array(false, 'C++') ,
-			"c-sharp" => array(false, 'C#') ,
-			"coldfusion" => array(false, 'ColdFusion') ,
-			"jscript" => array(false, 'Java Script') ,
-			"java" => array(false, 'JAVA') ,
-			"javafx" => array(false, 'JavaFX') ,
-			"delphi" => array(false, 'Delphi') ,
-			"diff" => array(false, 'Diff') ,
-			"erlang" => array(false, 'Erlang') ,
-			"groovy" => array(false, 'Groovy') ,
-			"patch" => array(false, 'Patch') ,
-			"pascal" => array(false, 'Pascal') ,
-			"perl" => array(false, 'Perl') ,
-			"php" => array(false, 'PHP') ,
-			"plain" => array(false, 'Plain Text') ,
-			"powershell" => array(false, 'PowerShell') ,
-			"python" => array(false, 'Python') ,
-			"ruby" => array(false, 'Ruby') ,
-			"scala" => array(false, 'Scala') ,
-			"shell" => array(false, 'Shell') ,
-			"vb" => array(false, 'VB') ,
-			"vb.net" => array(false, 'VB.Net') ,
-			"sql" => array(false, 'SQL') ,
-			"css" => array(false, 'CSS') ,
-			"xml" => array(false, 'XML') ,
-			"html" => array(false, 'HTML') ,
-			"xhtml" => array(false, 'XHTML') ,
-			"xslt" => array(false, 'XSLT') ,
+		$this->options = (array)$this->getOptions();
+		$this->version = ( isset($this->options["version"]) ? $this->options["version"] : $this->sh_versions[0] );
+		$this->theme = ( isset($this->options["theme"]) ? $this->options["theme"] : $this->sh_themes[0] );
+		if (version_compare($this->version, "3.0", "<") && $this->theme === 'MDUltra')
+			$this->theme = $this->sh_themes[0];
+
+		$this->languages = array(
+			"as3"  => array(false, 'AS3', 'js/shBrushAS3.js', 'shBrushAS3') ,
+			"bash" => array(false, 'Bash', 'js/shBrushBash.js', 'shBrushBash') ,
+			"c" => array(false, 'C', 'js/shBrushCpp.js', 'shBrushCpp') ,
+			"cpp" => array(false, 'C++',  'js/shBrushCpp.js', 'shBrushCpp') ,
+			"c-sharp" => array(false, 'C#', 'js/shBrushCSharp.js', 'shBrushCSharp') ,
+			"coldfusion" => array(false, 'ColdFusion', 'js/shBrushColdFusion.js', 'shBrushColdFusion') ,
+			"jscript" => array(false, 'Java Script', 'js/shBrushJScript.js', 'shBrushJScript') ,
+			"java" => array(false, 'JAVA', 'js/shBrushJava.js', 'shBrushJava') ,
+			"javafx" => array(false, 'JavaFX', 'js/shBrushJavaFX.js', 'shBrushJavaFX') ,
+			"delphi" => array(false, 'Delphi', 'js/shBrushDelphi.js', 'shBrushDelphi') ,
+			"diff" => array(false, 'Diff', 'js/shBrushDiff.js', 'shBrushDiff') ,
+			"erlang" => array(false, 'Erlang', 'js/shBrushErlang.js', 'shBrushErlang') ,
+			"groovy" => array(false, 'Groovy', 'js/shBrushGroovy.js', 'shBrushGroovy') ,
+			"patch" => array(false, 'Patch', 'js/shBrushDiff.js', 'shBrushDiff') ,
+			"pascal" => array(false, 'Pascal', 'js/shBrushDelphi.js', 'shBrushDelphi') ,
+			"perl" => array(false, 'Perl', 'js/shBrushPerl.js', 'shBrushPerl') ,
+			"php" => array(false, 'PHP', 'js/shBrushPhp.js', 'shBrushPhp') ,
+			"plain" => array(false, 'Plain Text', 'js/shBrushPlain.js', 'shBrushPlain') ,
+			"powershell" => array(false, 'PowerShell', 'js/shBrushPowerShell.js', 'shBrushPowerShell') ,
+			"python" => array(false, 'Python', 'js/shBrushPython.js', 'shBrushPython') ,
+			"ruby" => array(false, 'Ruby', 'js/shBrushRuby.js', 'shBrushRuby') ,
+			"scala" => array(false, 'Scala', 'js/shBrushScala.js', 'shBrushScala') ,
+			"shell" => array(false, 'Shell', 'js/shBrushBash.js', 'shBrushBash') ,
+			"text" => array(false, 'Plain Text', 'js/shBrushPlain.js', 'shBrushPlain') ,
+			"vb" => array(false, 'VB', 'js/shBrushVb.js', 'shBrushVb') ,
+			"vb.net" => array(false, 'VB.Net', 'js/shBrushVb.js', 'shBrushVb') ,
+			"sql" => array(false, 'SQL', 'js/shBrushSql.js', 'shBrushSql') ,
+			"css" => array(false, 'CSS', 'js/shBrushCss.js', 'shBrushCss') ,
+			"xml" => array(false, 'XML', 'js/shBrushXml.js', 'shBrushXml') ,
+			"html" => array(false, 'HTML', 'js/shBrushXml.js', 'shBrushXml') ,
+			"xhtml" => array(false, 'XHTML', 'js/shBrushXml.js', 'shBrushXml') ,
+			"xslt" => array(false, 'XSLT', 'js/shBrushXml.js', 'shBrushXml') ,
 			);
 
-		add_action('wp_print_styles', array(&$this, 'add_stylesheet'));
-		add_action('wp_head', array(&$this, 'add_head'));
+		if ( is_admin() ) {
+			add_action('admin_menu', array(&$this, 'admin_menu'));
+			add_filter('plugin_action_links', array(&$this, 'plugin_setting_links'), 10, 2 );
 
-		if ( $this->isKtai() )
-			$this->add_shortcodes();
+		} else {
+			add_action('wp_print_styles', array(&$this, 'add_stylesheet'));
+			add_action('wp_head', array(&$this, 'add_head'));
+			if ( $this->isKtai() || is_feed() )
+				$this->add_shortcodes();
+		}
 	}
 
+	//**************************************************************************************
+	// Add Admin Menu
+	//**************************************************************************************
+	function admin_menu() {
+		$this->addOptionPage(__('Syntax Highlighter', $this->textdomain_name), array($this, 'option_page'));
+	}
+
+	function plugin_setting_links($links, $file) {
+		if (method_exists($this, 'addPluginSettingLinks')) {
+			$links = $this->addPluginSettingLinks($links, $file);
+		} else {
+			$this_plugin = plugin_basename(__FILE__);
+			if ($file == $this_plugin) {
+				$settings_link = '<a href="' . $this->admin_action . '">' . __('Settings') . '</a>';
+				array_unshift($links, $settings_link); // before other links
+			}
+		}
+		return $links;
+	}
+
+	//**************************************************************************************
+	// Show Option Page
+	//**************************************************************************************
+	function option_page() {
+		if (isset($_POST['options_update'])) {
+			if ($this->wp25)
+				check_admin_referer("update_options", "_wpnonce_update_options");
+
+			// Update options
+			$this->_options_update($this->stripArray($_POST));
+			$this->note .= "<strong>".__('Done!', $this->textdomain_name)."</strong>";
+
+		} elseif(isset($_POST['options_delete'])) {
+			if ($this->wp25)
+				check_admin_referer("delete_options", "_wpnonce_delete_options");
+
+			// options delete
+			$this->_delete_settings();
+			$this->note .= "<strong>".__('Done!', $this->textdomain_name)."</strong>";
+			$this->error++;
+
+			$this->options = array();
+			$this->version = $this->sh_versions[0];
+			$this->theme   = $this->sh_themes[0];
+		}
+
+		$out  = '';
+
+		// Add Options
+		$out .= "<div class=\"wrap\">\n";
+		$out .= "<form method=\"post\" id=\"update_options\" action=\"".$this->admin_action."\">\n";
+		$out .= "<h2>".__('Syntax Highlighter Options', $this->textdomain_name)."</h2><br />\n";
+		if ($this->wp25)
+			$out .= $this->makeNonceField("update_options", "_wpnonce_update_options", true, false);
+
+		$out .= '<p>';
+		$out .= __('Version', $this->textdomain_name).':&nbsp;';
+		$out .= '<select name="version" id="version">';
+		foreach ($this->sh_versions as $version) {
+			$out .= '<option value="' . $version . '"' . ($this->options['version']==$version ? ' selected="selected"' : '') . '>' . $version .'</option>';
+		}
+		$out .= '</select>';
+		$out .= '&nbsp;&nbsp;';
+
+		$out .= __('Theme', $this->textdomain_name).':&nbsp;';
+		$out .= '<select name="theme" id="theme">';
+		foreach ($this->sh_themes as $theme) {
+			$out .= '<option value="' . $theme . '"' . ($this->options['theme']==$theme ? ' selected="selected"' : '') . '>' . $theme .'</option>';
+		}
+		$out .= '</select>';
+
+		$out .= "</p>\n";
+
+		// Add Update Button
+		$out .= "<p style=\"margin-top:1em\"><input type=\"submit\" name=\"options_update\" class=\"button-primary\" value=\"".__('Update Options', $this->textdomain_name)." &raquo;\" class=\"button\" /></p>";
+		$out .= "</form></div>\n";
+
+		// Options Delete
+		$out .= "<div class=\"wrap\" style=\"margin-top:2em;\">\n";
+		$out .= "<h2>" . __('Uninstall', $this->textdomain_name) . "</h2><br />\n";
+		$out .= "<form method=\"post\" id=\"delete_options\" action=\"".$this->admin_action."\">\n";
+		if ($this->wp25) $out .= $this->makeNonceField("delete_options", "_wpnonce_delete_options", true, false);
+		$out .= "<p>" . __('All the settings of &quot;Syntax Highlighter&quot; are deleted.', $this->textdomain_name) . "</p>";
+		$out .= "<input type=\"submit\" name=\"options_delete\" class=\"button-primary\" value=\"".__('Delete Options', $this->textdomain_name)." &raquo;\" class=\"button\" />";
+		$out .= "</form></div>\n";
+
+		// Output
+		echo (!empty($this->note) ? "<div id=\"message\" class=\"updated fade\"><p>{$this->note}</p></div>\n" : '') . "\n";
+		echo ($this->error == 0 ? $out : '') . "\n";
+	}
+
+	function _options_update($recv_param) {
+		$this->version = isset($recv_param['version']) ? $recv_param['version'] : $this->version;
+		$this->theme   = isset($recv_param['theme'])   ? $recv_param['theme']   : $this->theme;
+		$this->options = array(
+			'version' => $this->version,
+			'theme' => $this->theme,
+			);
+
+		// options update
+		$this->updateOptions();
+
+		return $this->options;
+	}
+
+	//**************************************************************************************
+	// Add stylesheet
+	//**************************************************************************************
 	function add_stylesheet() {
-		if ( function_exists('wp_enqueue_style') && $this->haveShortCode() !== FALSE && !$this->isKtai() ) {
-			wp_enqueue_style('shCore', $this->plugin_url.'css/shCore.css', array(), $this->plugin_ver, 'all');
-			wp_enqueue_style('sh'.$this->theme, $this->plugin_url."css/sh{$this->theme}.css", array('shCore'), $this->plugin_ver, 'all');
+		if ( function_exists('wp_enqueue_style') && $this->haveShortCode() !== FALSE && !$this->isKtai() && !is_feed() ) {
+			$sh_url = $this->plugin_url.$this->version.'/';
+			wp_enqueue_style('shCore', "{$sh_url}css/shCore.css", array(), $this->version, 'all');
+			if (version_compare($this->version, "3.0", ">="))
+				wp_enqueue_style('shCore'.$this->theme, "{$sh_url}css/shCore{$this->theme}.css", array('shCore'), $this->version, 'all');
+			wp_enqueue_style('shTheme'.$this->theme, "{$sh_url}css/shTheme{$this->theme}.css", array('shCore'), $this->version, 'all');
 		}
 	}
 
 	function add_head() {
-		if ( $this->haveShortCode() !== FALSE && !$this->isKtai() ) {
+		if ( $this->haveShortCode() !== FALSE && !$this->isKtai() && !is_feed() ) {
 			if (!function_exists('wp_enqueue_style')) {
-				echo "<link href=\"{$this->plugin_url}css/shCore.css?ver={$this->plugin_ver}\" type=\"text/css\" rel=\"stylesheet\" media=\"all\" />\n";
-				echo "<link href=\"{$this->plugin_url}css/sh{$this->theme}.css?ver={$this->plugin_ver}\" type=\"text/css\" rel=\"stylesheet\" media=\"all\" />\n";
+				$sh_url = $this->plugin_url.$this->version.'/';
+				echo "<link href=\"{$sh_url}css/shCore.css?ver={$this->version}\" type=\"text/css\" rel=\"stylesheet\" media=\"all\" />\n";
+				if (version_compare($this->version, "3.0", ">="))
+					echo "<link href=\"{$sh_url}css/shCore{$this->theme}.css?ver={$this->version}\" type=\"text/css\" rel=\"stylesheet\" media=\"all\" />\n";
+				echo "<link href=\"{$sh_url}css/shTheme{$this->theme}.css?ver={$this->version}\" type=\"text/css\" rel=\"stylesheet\" media=\"all\" />\n";
 			}
+
 			add_filter('the_content', array(&$this, 'parse_shortcodes'), 7);
 			add_action('wp_footer', array(&$this, 'add_footer'));
 		}
 	}
 
+	//**************************************************************************************
+	// Add JavaScript
+	//**************************************************************************************
 	function add_footer(){
 		$enabled = false;
-		foreach ($this->options as $key => $val) {
-			if ($val[0]) {$enabled = true; break;}
+		foreach ($this->languages as $key => $val) {
+			if ($val[0]) {
+				$enabled = true;
+				break;
+			}
 		}
 		if (!$enabled)
 			return;
 
-		$scripts  = "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shCore.js?ver={$this->plugin_ver}\"></script>\n";
+		$sh_url   = $this->plugin_url.$this->version.'/';
+		$scripts  = "<script type=\"text/javascript\" src=\"{$sh_url}js/shCore.js?ver={$this->version}\"></script>\n";
 
 		// AS3
-		if (isset($this->options["as3"]) && $this->options["as3"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushAS3.js?ver={$this->plugin_ver}\"></script>\n";
+		if (isset($this->languages["as3"]) && $this->languages["as3"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['as3'][2].'?ver='.$this->version.'"></script>'."\n";
 
 		// Bash / shell
-		if (isset($this->options["bash"]) && $this->options["bash"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushBash.js?ver={$this->plugin_ver}\"></script>\n";
-		elseif (isset($this->options["shell"]) && $this->options["shell"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushBash.js?ver={$this->plugin_ver}\"></script>\n";
+		if (isset($this->languages["bash"]) && $this->languages["bash"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['bash'][2].'?ver='.$this->version.'"></script>'."\n";
+		elseif (isset($this->languages["shell"]) && $this->languages["shell"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['shell'][2].'?ver='.$this->version.'"></script>'."\n";
 
 		// C / C++
-		if (isset($this->options["c"]) && $this->options["c"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushCpp.js?ver={$this->plugin_ver}\"></script>\n";
-		elseif (isset($this->options["cpp"]) && $this->options["cpp"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushCpp.js?ver={$this->plugin_ver}\"></script>\n";
+		if (isset($this->languages["c"]) && $this->languages["c"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['c'][2].'?ver='.$this->version.'"></script>'."\n";
+		elseif (isset($this->languages["cpp"]) && $this->languages["cpp"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['cpp'][2].'?ver='.$this->version.'"></script>'."\n";
 
 		// C#
-		if (isset($this->options["c-sharp"]) && $this->options["c-sharp"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushCSharp.js?ver={$this->plugin_ver}\"></script>\n";
+		if (isset($this->languages["c-sharp"]) && $this->languages["c-sharp"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['c-sharp'][2].'?ver='.$this->version.'"></script>'."\n";
 
 		// ColdFusion
-		if (isset($this->options["coldfusion"]) && $this->options["coldfusion"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushColdFusion.js?ver={$this->plugin_ver}\"></script>\n";
+		if (isset($this->languages["coldfusion"]) && $this->languages["coldfusion"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['coldfusion'][2].'?ver='.$this->version.'"></script>'."\n";
 
 		// Diff
-		if (isset($this->options["diff"]) && $this->options["diff"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushDiff.js?ver={$this->plugin_ver}\"></script>\n";
-		elseif (isset($this->options["patch"]) && $this->options["patch"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushDiff.js?ver={$this->plugin_ver}\"></script>\n";
+		if (isset($this->languages["diff"]) && $this->languages["diff"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['diff'][2].'?ver='.$this->version.'"></script>'."\n";
+		elseif (isset($this->languages["patch"]) && $this->languages["patch"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['patch'][2].'?ver='.$this->version.'"></script>'."\n";
 
 		// Groovy
-		if (isset($this->options["groovy"]) && $this->options["groovy"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushGroovy.js?ver={$this->plugin_ver}\"></script>\n";
+		if (isset($this->languages["groovy"]) && $this->languages["groovy"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['groovy'][2].'?ver='.$this->version.'"></script>'."\n";
 
 		// Java
-		if (isset($this->options["java"]) && $this->options["java"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushJava.js?ver={$this->plugin_ver}\"></script>\n";
+		if (isset($this->languages["java"]) && $this->languages["java"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['java'][2].'?ver='.$this->version.'"></script>'."\n";
 
 		// JavaScript
-		if (isset($this->options["jscript"]) && $this->options["jscript"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushJScript.js?ver={$this->plugin_ver}\"></script>\n";
+		if (isset($this->languages["jscript"]) && $this->languages["jscript"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['jscript'][2].'?ver='.$this->version.'"></script>'."\n";
 
 		// JavaFX
-		if (isset($this->options["javafx"]) && $this->options["javafx"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushJavaFX.js?ver={$this->plugin_ver}\"></script>\n";
+		if (isset($this->languages["javafx"]) && $this->languages["javafx"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['javafx'][2].'?ver='.$this->version.'"></script>'."\n";
 
 		// Delphi
-		if (isset($this->options["delphi"]) && $this->options["delphi"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushDelphi.js?ver={$this->plugin_ver}\"></script>\n";
-		elseif (isset($this->options["pascal"]) && $this->options["pascal"][0])
-			 $scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushDelphi.js?ver={$this->plugin_ver}\"></script>\n";
+		if (isset($this->languages["delphi"]) && $this->languages["delphi"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['delphi'][2].'?ver='.$this->version.'"></script>'."\n";
+		elseif (isset($this->languages["pascal"]) && $this->languages["pascal"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['pascal'][2].'?ver='.$this->version.'"></script>'."\n";
 
 		// Erlang
-		if (isset($this->options["erlang"]) && $this->options["erlang"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushErlang.js?ver={$this->plugin_ver}\"></script>\n";
+		if (isset($this->languages["erlang"]) && $this->languages["erlang"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['erlang'][2].'?ver='.$this->version.'"></script>'."\n";
 
 		// Perl
-		if (isset($this->options["perl"]) && $this->options["perl"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushPerl.js?ver={$this->plugin_ver}\"></script>\n";
+		if (isset($this->languages["perl"]) && $this->languages["perl"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['perl'][2].'?ver='.$this->version.'"></script>'."\n";
 
 		// PHP
-		if (isset($this->options["php"]) && $this->options["php"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushPhp.js?ver={$this->plugin_ver}\"></script>\n";
+		if (isset($this->languages["php"]) && $this->languages["php"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['php'][2].'?ver='.$this->version.'"></script>'."\n";
 
 		// Python
-		if (isset($this->options["python"]) && $this->options["python"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushPython.js?ver={$this->plugin_ver}\"></script>\n";
+		if (isset($this->languages["python"]) && $this->languages["python"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['python'][2].'?ver='.$this->version.'"></script>'."\n";
 
 		// Plain Text
-		if (isset($this->options["plain"]) && $this->options["plain"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushPlain.js?ver={$this->plugin_ver}\"></script>\n";
-		elseif (isset($this->options["text"]) && $this->options["text"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushPlain.js?ver={$this->plugin_ver}\"></script>\n";
+		if (isset($this->languages["plain"]) && $this->languages["plain"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['plain'][2].'?ver='.$this->version.'"></script>'."\n";
+		elseif (isset($this->languages["text"]) && $this->languages["text"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['text'][2].'?ver='.$this->version.'"></script>'."\n";
 
 		// PowerShell
-		if (isset($this->options["powershell"]) && $this->options["powershell"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushPowerShell.js?ver={$this->plugin_ver}\"></script>\n";
+		if (isset($this->languages["powershell"]) && $this->languages["powershell"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['powershell'][2].'?ver='.$this->version.'"></script>'."\n";
 
 		// Ruby
-		if (isset($this->options["ruby"]) && $this->options["ruby"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushRuby.js?ver={$this->plugin_ver}\"></script>\n";
+		if (isset($this->languages["ruby"]) && $this->languages["ruby"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['ruby'][2].'?ver='.$this->version.'"></script>'."\n";
 
 		// Scala
-		if (isset($this->options["scala"]) && $this->options["scala"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushScala.js?ver={$this->plugin_ver}\"></script>\n";
+		if (isset($this->languages["scala"]) && $this->languages["scala"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['scala'][2].'?ver='.$this->version.'"></script>'."\n";
 
 		// SQL
-		if (isset($this->options["sql"]) && $this->options["sql"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushSql.js?ver={$this->plugin_ver}\"></script>\n";
+		if (isset($this->languages["sql"]) && $this->languages["sql"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['sql'][2].'?ver='.$this->version.'"></script>'."\n";
 
 		// Visual Basic
-		if (isset($this->options["vb"]) && $this->options["vb"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushVb.js?ver={$this->plugin_ver}\"></script>\n";
-		elseif (isset($this->options["vb.net"]) && $this->options["vb.net"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushVb.js?ver={$this->plugin_ver}\"></script>\n";
+		if (isset($this->languages["vb"]) && $this->languages["vb"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['vb'][2].'?ver='.$this->version.'"></script>'."\n";
+		elseif (isset($this->languages["vb.net"]) && $this->languages["vb.net"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['vb.net'][2].'?ver='.$this->version.'"></script>'."\n";
 
 		// CSS
-		if (isset($this->options["css"]) && $this->options["css"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushCss.js?ver={$this->plugin_ver}\"></script>\n";
+		if (isset($this->languages["css"]) && $this->languages["css"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['css'][2].'?ver='.$this->version.'"></script>'."\n";
 
 		// XML / (X)HTML
-		if (isset($this->options["xml"]) && $this->options["xml"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushXml.js?ver={$this->plugin_ver}\"></script>\n";
-		elseif (isset($this->options["html"]) && $this->options["html"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushXml.js?ver={$this->plugin_ver}\"></script>\n";
-		elseif (isset($this->options["xhtml"]) && $this->options["xhtml"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushXml.js?ver={$this->plugin_ver}\"></script>\n";
-		elseif (isset($this->options["xslt"]) && $this->options["xslt"][0])
-			$scripts .= "<script type=\"text/javascript\" src=\"{$this->plugin_url}js/shBrushXml.js?ver={$this->plugin_ver}\"></script>\n";
+		if (isset($this->languages["xml"]) && $this->languages["xml"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['xml'][2].'?ver='.$this->version.'"></script>'."\n";
+		elseif (isset($this->languages["html"]) && $this->languages["html"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['html'][2].'?ver='.$this->version.'"></script>'."\n";
+		elseif (isset($this->languages["xhtml"]) && $this->languages["xhtml"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['xhtml'][2].'?ver='.$this->version.'"></script>'."\n";
+		elseif (isset($this->languages["xslt"]) && $this->languages["xslt"][0])
+			$scripts .= '<script type="text/javascript" src="'.$sh_url.$this->languages['xslt'][2].'?ver='.$this->version.'"></script>'."\n";
 
 		echo $scripts;
 
 		$js_out  = '';
-		if (version_compare($this->plugin_ver, "2.0", "<")) {
+		if (version_compare($this->version, "2.0", "<")) {
 			// -- for SyntaxHighlighter 1.5.x
 			$js_out .= "dp.SyntaxHighlighter.Toolbar.Commands.About.label='" . __('?', $this->textdomain_name) . "';";
 			$js_out .= "dp.SyntaxHighlighter.Toolbar.Commands.CopyToClipboard.label='" . __('copy to clipboard', $this->textdomain_name) . "';";
@@ -305,9 +441,9 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 			$js_out .= "dp.SyntaxHighlighter.Toolbar.Commands.ExpandSource.label='" . __('+ expand source', $this->textdomain_name) . "';";
 			$js_out .= "dp.SyntaxHighlighter.Toolbar.Commands.PrintSource.label='" . __('print', $this->textdomain_name) . "';";
 			$js_out .= "dp.SyntaxHighlighter.Toolbar.Commands.ViewSource.label='" . __('view plain', $this->textdomain_name) . "';";
-			$js_out .= "dp.SyntaxHighlighter.ClipboardSwf = '{$this->plugin_url}js/clipboard.swf';\n";
+			$js_out .= "dp.SyntaxHighlighter.ClipboardSwf = '{$sh_url}js/clipboard.swf';\n";
 			$js_out .= "dp.SyntaxHighlighter.HighlightAll('code');\n";
-		} elseif (version_compare($this->plugin_ver, "3.0", "<")) {
+		} elseif (version_compare($this->version, "3.0", "<")) {
 			// -- for SyntaxHighlighter 2.x
 			$js_out .= 'SyntaxHighlighter.config.strings.expandSource="' . __('+ expand source', $this->textdomain_name) . '";';
 			$js_out .= 'SyntaxHighlighter.config.strings.viewSource="' . __('view plain', $this->textdomain_name) . '";';
@@ -317,7 +453,7 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 			$js_out .= 'SyntaxHighlighter.config.strings.help="' . __('?', $this->textdomain_name) . '";';
 			$js_out .= 'SyntaxHighlighter.config.strings.noBrush="' . __("Can't find brush for: ", $this->textdomain_name) . '";';
 			$js_out .= 'SyntaxHighlighter.config.strings.brushNotHtmlScript="' . __("Brush wasn't made for html-script option: ", $this->textdomain_name) . '";';
-			$js_out .= "SyntaxHighlighter.config.clipboardSwf=\"{$this->plugin_url}js/clipboard.swf\";\n";
+			$js_out .= "SyntaxHighlighter.config.clipboardSwf=\"{$sh_url}js/clipboard.swf\";\n";
 			$js_out .= "SyntaxHighlighter.all();\n";
 		} else {
 			// -- for SyntaxHighlighter 3.x
@@ -327,6 +463,9 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 		$this->writeScript($js_out, 'footer');
 	}
 
+	//**************************************************************************************
+	// Add Shortcode
+	//**************************************************************************************
 	function Shortcode_Handler($atts, $content = null, $startTag) {
 		extract(shortcode_atts($this->default_atts, $atts));
 
@@ -348,19 +487,19 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 		$inTxt = ( $encode
 			? htmlentities($content, ENT_QUOTES, get_settings('blog_charset'))
 			: $content );
-		if (isset($this->options[$startTag]))
-			$this->options[$startTag][0] = true;
+		if (isset($this->languages[$startTag]))
+			$this->languages[$startTag][0] = true;
 
 		if ($lang_name) {
 			$outTxt = "\n\n"
 				. '<p class="lang-name">'
-				. $this->options[$startTag][1]
+				. $this->languages[$startTag][1]
 				. '</p>'
 				. "\n"
 				;
 		}
 
-		if (version_compare($this->plugin_ver, "2.0", "<")) {
+		if (version_compare($this->version, "2.0", "<")) {
 			// -- for SyntaxHighlighter 1.5.x
 			$outTxt .= '<pre'
 				. ' name="code"'
@@ -397,9 +536,6 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 		return $outTxt;
 	}
 
-	/*
-	* have short code
-	*/
 	function haveShortCode() {
 		if (is_admin())
 			return FALSE;
@@ -409,27 +545,30 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 
 		global $wp_query;
 
-		$pattern = '/\[(code';
-		foreach ($this->target as $val) {
-			$pattern .= '|' . strtolower($val);
-		}
-		$pattern .= ')([\s]+[^\]]*\]|\])/im';
 		$found = array();
-		$hasTeaser = !( is_single() || is_page() );
-		foreach($wp_query->posts as $key => $post) {
-			$post_content = isset($post->post_content) ? $post->post_content : '';
-			if ( $hasTeaser && preg_match('/<!--more(.*?)?-->/', $post_content, $matches) ) {
-				$content = explode($matches[0], $post_content, 2);
-				$post_content = $content[0];
-			}
 
-			if (!empty($post_content) && preg_match_all($pattern, $post_content, $matches, PREG_SET_ORDER)) {
-				foreach ((array) $matches as $match) {
-					$found[$match[1]] = true;
-				}
-				unset($match);
+		if (isset($wp_query->posts)) {
+			$pattern = '/\[(code';
+			foreach ($this->target as $val) {
+				$pattern .= '|' . strtolower($val);
 			}
-			unset($matches);
+			$pattern .= ')([\s]+[^\]]*\]|\])/im';
+			$hasTeaser = !( is_single() || is_page() );
+			foreach((array)$wp_query->posts as $key => $post) {
+				$post_content = isset($post->post_content) ? $post->post_content : '';
+				if ( $hasTeaser && preg_match('/<!--more(.*?)?-->/', $post_content, $matches) ) {
+					$content = explode($matches[0], $post_content, 2);
+					$post_content = $content[0];
+				}
+
+				if (!empty($post_content) && preg_match_all($pattern, $post_content, $matches, PREG_SET_ORDER)) {
+					foreach ((array) $matches as $match) {
+						$found[$match[1]] = true;
+					}
+					unset($match);
+				}
+				unset($matches);
+			}
 		}
 
 		$this->haveShortCode['checked'] = true;
@@ -475,9 +614,9 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 	function Shortcode_erlang($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'erlang');}
 	function Shortcode_powershell($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'powershell');}
 
-	/*
-	* parse shortcodes
-	*/
+	//**************************************************************************************
+	// parse shortcodes
+	//**************************************************************************************
 	function parse_shortcodes( $content ) {
 		global $shortcode_tags;
 
@@ -492,6 +631,9 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 		return $content;
 	}
 
+	//**************************************************************************************
+	// Add shortcodes
+	//**************************************************************************************
 	function add_shortcodes() {
 		add_shortcode('code', array(&$this, 'Shortcode_code'));
 		foreach ($this->target as $val) {
