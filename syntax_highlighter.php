@@ -199,7 +199,7 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 				check_admin_referer("update_options", "_wpnonce_update_options");
 
 			// Update options
-			$this->_options_update($this->stripArray($_POST));
+			$this->options = $this->_options_update($this->stripArray($_POST));
 			$this->note .= "<strong>".__('Done!', $this->textdomain_name)."</strong>";
 
 		} elseif(isset($_POST['options_delete'])) {
@@ -207,13 +207,9 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 				check_admin_referer("delete_options", "_wpnonce_delete_options");
 
 			// options delete
-			$this->_delete_settings();
+			$this->options = $this->_delete_settings();
 			$this->note .= "<strong>".__('Done!', $this->textdomain_name)."</strong>";
 			$this->error++;
-
-			$this->options = array();
-			$this->version = $this->sh_versions[0];
-			$this->theme   = $this->sh_themes[0];
 		}
 
 		$out  = '';
@@ -261,18 +257,38 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 		echo ($this->error == 0 ? $out : '') . "\n";
 	}
 
+	//**************************************************************************************
+	// Update Settings
+	//**************************************************************************************
 	function _options_update($recv_param) {
 		$this->version = isset($recv_param['version']) ? $recv_param['version'] : $this->version;
 		$this->theme   = isset($recv_param['theme'])   ? $recv_param['theme']   : $this->theme;
-		$this->options = array(
+		$options = array(
 			'version' => $this->version,
 			'theme' => $this->theme,
 			);
 
 		// options update
+		$this->options = $options;
 		$this->updateOptions();
 
-		return $this->options;
+		return $options;
+	}
+
+	//**************************************************************************************
+	// Delete Settings
+	//**************************************************************************************
+	private function _delete_settings() {
+		$this->deleteOptions();
+
+		$this->version = $this->sh_versions[0];
+		$this->theme   = $this->sh_themes[0];
+		$options = array(
+			'version' => $this->version,
+			'theme' => $this->theme,
+			);
+
+		return $options;
 	}
 
 	//**************************************************************************************
