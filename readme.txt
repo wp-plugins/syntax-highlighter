@@ -26,6 +26,7 @@ Feature summary
 * German (de_DE) - [Rian Klijn](http://www.creditriskmanager.com/ "Credit Risk Manager")
 * Simplified Chinese (zh-CN) - heartnn
 * Turkish (tr_TR) - [Hakan Demiray](http://www.dmry.net/ "Günlük Haftalık Aylık")
+* Iran (fa_IR) - mostafa soufi
 
 If you have translated into your language, please let me know.
 
