@@ -27,7 +27,7 @@ class wokController {
 	var $admin_option, $admin_action, $admin_hook;
 	var $note, $error;
 	var $charset;
-	var $wp25, $wp26, $wp27, $wp28, $wp29, $wp30;
+	var $wp25, $wp26, $wp27, $wp28, $wp29, $wp30, $wp31;
 	var $inline_js;
 
 	var $jquery_js  = 'includes/js/jquery-1.4.2.min.js';
@@ -48,6 +48,7 @@ class wokController {
 		$this->wp28    = version_compare($wp_version, "2.8", ">=");
 		$this->wp29    = version_compare($wp_version, "2.9", ">=");
 		$this->wp30    = version_compare($wp_version, "3.0", ">=");
+		$this->wp31    = version_compare($wp_version, "3.1", ">=");
 
 		$this->setPluginDir($file);
 		$this->loadTextdomain();
@@ -312,9 +313,9 @@ class wokScriptManager {
 		$this->__construct();
 	}
 	function __construct() {
-		global $wp_scripts;
-		if (!is_a($wp_scripts, 'WP_Scripts'))
-			$wp_scripts = new WP_Scripts();
+//		global $wp_scripts;
+//		if (!is_a($wp_scripts, 'WP_Scripts'))
+//			$wp_scripts = new WP_Scripts();
 
 		add_action('admin_head', array($this, 'adminHeadPrintScript'), 11);
 		add_action('wp_head', array($this, 'headPrintScript'), 11);
@@ -379,4 +380,3 @@ class wokScriptManager {
 	}
 }
 endif;
-?>

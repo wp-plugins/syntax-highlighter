@@ -3,7 +3,7 @@
 Plugin Name: Syntax Highlighter for WordPress
 Plugin URI: http://wppluginsj.sourceforge.jp/syntax-highlighter/
 Description: 100% JavaScript syntax highlighter This plugin makes using the <a href="http://alexgorbatchev.com/SyntaxHighlighter">Syntax highlighter</a> to highlight code snippets within WordPress simple. Supports Bash, C++, C#, CSS, Delphi, Java, JavaScript, PHP, Python, Ruby, SQL, VB, VB.NET, XML, and (X)HTML.
-Version: 3.0.83.1
+Version: 3.0.83.2
 Author: wokamoto
 Author URI: http://dogmap.jp/
 Text Domain: syntax-highlighter
