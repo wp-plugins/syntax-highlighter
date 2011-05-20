@@ -3,7 +3,7 @@
 Plugin Name: Syntax Highlighter for WordPress
 Plugin URI: http://wppluginsj.sourceforge.jp/syntax-highlighter/
 Description: 100% JavaScript syntax highlighter This plugin makes using the <a href="http://alexgorbatchev.com/SyntaxHighlighter">Syntax highlighter</a> to highlight code snippets within WordPress simple. Supports Bash, C++, C#, CSS, Delphi, Java, JavaScript, PHP, Python, Ruby, SQL, VB, VB.NET, XML, and (X)HTML.
-Version: 3.0.83.2
+Version: 3.0.83.3
 Author: wokamoto
 Author URI: http://dogmap.jp/
 Text Domain: syntax-highlighter
@@ -13,7 +13,7 @@ License:
  Released under the GPL license
   http://www.gnu.org/copyleft/gpl.html
 
-  Copyright 2008 - 2010 wokamoto (email : wokamoto1973@gmail.com)
+  Copyright 2008 - 2011 wokamoto (email : wokamoto1973@gmail.com)
 
     This program is free software; you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -102,8 +102,9 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 		);
 	var $options;
 	var $languages;
+	var $parsed = false;
 
-	var $haveShortCode = array(
+	var $have_short_code = array(
 		'checked' => false,
 		'enabled' => false,
 		);
@@ -163,10 +164,16 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 			add_filter('plugin_action_links', array(&$this, 'plugin_setting_links'), 10, 2 );
 
 		} else {
-			add_action('wp_print_styles', array(&$this, 'add_stylesheet'));
-			add_action('wp_head', array(&$this, 'add_head'));
-			if ( $this->isKtai() || is_feed() )
-				$this->add_shortcodes();
+			if ( $this->isKtai() ) {
+				add_filter('the_content', array(&$this, 'parse_shortcodes'), 7);
+			} else {
+				add_action('wp_print_styles', array(&$this, 'add_stylesheet'));
+				add_action('wp_head', array(&$this, 'add_head'));
+				add_action('atom_head', array(&$this, 'add_feed_head'));
+				add_action('rdf_header', array(&$this, 'add_feed_head'));
+				add_action('rss2_head', array(&$this, 'add_feed_head'));
+				add_action('rss_head', array(&$this, 'add_feed_head'));
+			}
 		}
 	}
 
@@ -195,16 +202,18 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 	//**************************************************************************************
 	function option_page() {
 		if (isset($_POST['options_update'])) {
-			if ($this->wp25)
+			if ($this->wp25) {
 				check_admin_referer("update_options", "_wpnonce_update_options");
+			}
 
 			// Update options
 			$this->options = $this->_options_update($this->stripArray($_POST));
 			$this->note .= "<strong>".__('Done!', $this->textdomain_name)."</strong>";
 
 		} elseif(isset($_POST['options_delete'])) {
-			if ($this->wp25)
+			if ($this->wp25) {
 				check_admin_referer("delete_options", "_wpnonce_delete_options");
+			}
 
 			// options delete
 			$this->options = $this->_delete_settings();
@@ -218,8 +227,9 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 		$out .= "<div class=\"wrap\">\n";
 		$out .= "<form method=\"post\" id=\"update_options\" action=\"".$this->admin_action."\">\n";
 		$out .= "<h2>".__('Syntax Highlighter Options', $this->textdomain_name)."</h2><br />\n";
-		if ($this->wp25)
+		if ($this->wp25) {
 			$out .= $this->makeNonceField("update_options", "_wpnonce_update_options", true, false);
+		}
 
 		$out .= '<p>';
 		$out .= __('Version', $this->textdomain_name).':&nbsp;';
@@ -247,7 +257,9 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 		$out .= "<div class=\"wrap\" style=\"margin-top:2em;\">\n";
 		$out .= "<h2>" . __('Uninstall', $this->textdomain_name) . "</h2><br />\n";
 		$out .= "<form method=\"post\" id=\"delete_options\" action=\"".$this->admin_action."\">\n";
-		if ($this->wp25) $out .= $this->makeNonceField("delete_options", "_wpnonce_delete_options", true, false);
+		if ($this->wp25) {
+			$out .= $this->makeNonceField("delete_options", "_wpnonce_delete_options", true, false);
+		}
 		$out .= "<p>" . __('All the settings of &quot;Syntax Highlighter&quot; are deleted.', $this->textdomain_name) . "</p>";
 		$out .= "<input type=\"submit\" name=\"options_delete\" class=\"button-primary\" value=\"".__('Delete Options', $this->textdomain_name)." &raquo;\" class=\"button\" />";
 		$out .= "</form></div>\n";
@@ -295,27 +307,38 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 	// Add stylesheet
 	//**************************************************************************************
 	function add_stylesheet() {
-		if ( function_exists('wp_enqueue_style') && $this->haveShortCode() !== FALSE && !$this->isKtai() && !is_feed() ) {
+		if ( function_exists('wp_enqueue_style') && $this->have_short_code() !== FALSE && !$this->isKtai() && !is_feed() ) {
 			$sh_url = $this->plugin_url.$this->version.'/';
 			wp_enqueue_style('shCore', "{$sh_url}css/shCore.css", array(), $this->version, 'all');
-			if (version_compare($this->version, "3.0", ">="))
+			if (version_compare($this->version, "3.0", ">=")) {
 				wp_enqueue_style('shCore'.$this->theme, "{$sh_url}css/shCore{$this->theme}.css", array('shCore'), $this->version, 'all');
+			}
 			wp_enqueue_style('shTheme'.$this->theme, "{$sh_url}css/shTheme{$this->theme}.css", array('shCore'), $this->version, 'all');
 		}
 	}
 
 	function add_head() {
-		if ( $this->haveShortCode() !== FALSE && !$this->isKtai() && !is_feed() ) {
+		if ( $this->have_short_code() !== FALSE && !$this->isKtai() ) {
 			if (!function_exists('wp_enqueue_style')) {
 				$sh_url = $this->plugin_url.$this->version.'/';
-				echo "<link href=\"{$sh_url}css/shCore.css?ver={$this->version}\" type=\"text/css\" rel=\"stylesheet\" media=\"all\" />\n";
-				if (version_compare($this->version, "3.0", ">="))
-					echo "<link href=\"{$sh_url}css/shCore{$this->theme}.css?ver={$this->version}\" type=\"text/css\" rel=\"stylesheet\" media=\"all\" />\n";
-				echo "<link href=\"{$sh_url}css/shTheme{$this->theme}.css?ver={$this->version}\" type=\"text/css\" rel=\"stylesheet\" media=\"all\" />\n";
+				$out = "<link href=\"{$sh_url}css/shCore.css?ver={$this->version}\" type=\"text/css\" rel=\"stylesheet\" media=\"all\" />\n";
+				if (version_compare($this->version, "3.0", ">=")) {
+					$out .= "<link href=\"{$sh_url}css/shCore{$this->theme}.css?ver={$this->version}\" type=\"text/css\" rel=\"stylesheet\" media=\"all\" />\n";
+				}
+				$out .= "<link href=\"{$sh_url}css/shTheme{$this->theme}.css?ver={$this->version}\" type=\"text/css\" rel=\"stylesheet\" media=\"all\" />\n";
+				echo $out;
 			}
 
+			add_filter('the_excerpt', array(&$this, 'parse_shortcodes'), 7);
 			add_filter('the_content', array(&$this, 'parse_shortcodes'), 7);
 			add_action('wp_footer', array(&$this, 'add_footer'));
+		}
+	}
+
+	function add_feed_head() {
+		if ( $this->have_short_code() !== FALSE ) {
+			add_filter('the_excerpt_rss', array(&$this, 'parse_shortcodes'), 7);
+			add_filter('the_content', array(&$this, 'parse_shortcodes'), 7);
 		}
 	}
 
@@ -482,7 +505,7 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 	//**************************************************************************************
 	// Add Shortcode
 	//**************************************************************************************
-	function Shortcode_Handler($atts, $content = null, $startTag) {
+	function shortcode_handler($atts, $content = null, $startTag) {
 		extract(shortcode_atts($this->default_atts, $atts));
 
 		if (strtolower($encode) === 'true')
@@ -500,11 +523,14 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 
 		$outTxt = '';
 
-		$inTxt = ( $encode
+		$inTxt = (
+			$encode
 			? htmlentities($content, ENT_QUOTES, get_settings('blog_charset'))
-			: $content );
-		if (isset($this->languages[$startTag]))
+			: $content
+			);
+		if (isset($this->languages[$startTag])) {
 			$this->languages[$startTag][0] = true;
+		}
 
 		if ($lang_name) {
 			$outTxt = "\n\n"
@@ -515,49 +541,45 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 				;
 		}
 
-		if (version_compare($this->version, "2.0", "<")) {
-			// -- for SyntaxHighlighter 1.5.x
-			$outTxt .= '<pre'
-				. ' name="code"'
-				. ' class="'.$startTag.($pVal > 1 ? ":firstLine[{$pVal}]" : '').'"'
-				. '>'
-				. $inTxt
-				. '</pre>'
-				. "\n\n"
-				;
-		} else {
-			// -- for SyntaxHighlighter 2.x or 3.x
-			$outTxt .= '<pre'
-				. ' class="'
-				. "brush: {$startTag};"
-				. ($pVal > 1 ? " first-line: {$pVal};" : '')
-				. (!empty($highlight_lines) ? " highlight: [{$highlight_lines}];" : '')
-				. (strtolower($collapse) == 'true' ? ' collapse: true;' : '')
-				. (strtolower($gutter) == 'false' ? ' gutter: false;' : '')
-				. (strtolower($ruler) == 'true' ? ' ruler: true;' : '')
-				. (strtolower($toolbar) == 'false' ? ' toolbar: false;' : '')
-				. (strtolower($smart_tabs) == 'false' ? ' smart-tabs: false;' : '')
-				. (strtolower($tab_size) != '4' ? ' tab-size: ' . (int)$tab_size . ';' : '')
-				. (strtolower($auto_link) == 'false' ? ' auto-links: false;' : '')
-				. (strtolower($light) == 'true' ? ' light: true;' : '')
-				. ($font_size != '100%' ? " font-size: {$font_size};" : '')
-				. '"'
-				. '>'
-				. $inTxt
-				. '</pre>'
-				. "\n\n"
-				;
+		$pre_tag = '<pre>';
+		if (!$this->isKtai() && !is_feed()) {
+			if (version_compare($this->version, "2.0", "<")) {
+				// -- for SyntaxHighlighter 1.5.x
+				$pre_tag = '<pre'
+					. ' name="code"'
+					. ' class="'.$startTag.($pVal > 1 ? ":firstLine[{$pVal}]" : '') . '"'
+					. '>';
+			} else {
+				// -- for SyntaxHighlighter 2.x or 3.x
+				$pre_tag = '<pre'
+					. ' class="'
+					. "brush: {$startTag};"
+					. ($pVal > 1 ? " first-line: {$pVal};" : '')
+					. (!empty($highlight_lines) ? " highlight: [{$highlight_lines}];" : '')
+					. (strtolower($collapse) == 'true' ? ' collapse: true;' : '')
+					. (strtolower($gutter) == 'false' ? ' gutter: false;' : '')
+					. (strtolower($ruler) == 'true' ? ' ruler: true;' : '')
+					. (strtolower($toolbar) == 'false' ? ' toolbar: false;' : '')
+					. (strtolower($smart_tabs) == 'false' ? ' smart-tabs: false;' : '')
+					. (strtolower($tab_size) != '4' ? ' tab-size: ' . (int)$tab_size . ';' : '')
+					. (strtolower($auto_link) == 'false' ? ' auto-links: false;' : '')
+					. (strtolower($light) == 'true' ? ' light: true;' : '')
+					. ($font_size != '100%' ? " font-size: {$font_size};" : '')
+					. '"'
+					. '>';
+			}
 		}
+		$outTxt .=  "{$pre_tag}{$inTxt}</pre>\n\n";
 
 		return $outTxt;
 	}
 
-	function haveShortCode() {
+	function have_short_code() {
 		if (is_admin())
 			return FALSE;
 
-		if ($this->haveShortCode['checked'])
-			return $this->haveShortCode['enabled'];
+		if ($this->have_short_code['checked'])
+			return $this->have_short_code['enabled'];
 
 		global $wp_query;
 
@@ -587,48 +609,48 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 			}
 		}
 
-		$this->haveShortCode['checked'] = true;
-		$this->haveShortCode['enabled'] = (count($found) > 0 ? $found : FALSE);
+		$this->have_short_code['checked'] = true;
+		$this->have_short_code['enabled'] = (count($found) > 0 ? $found : FALSE);
 
-		return $this->haveShortCode['enabled'];
+		return $this->have_short_code['enabled'];
 	}
 
-	function Shortcode_code($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'code');}
+	function shortcode_code($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'code');}
 
-	function Shortcode_c($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'c');}
-	function Shortcode_cpp($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'cpp');}
-	function Shortcode_csharp($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'c-sharp');}
-	function Shortcode_java($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'java');}
-	function Shortcode_javascript($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'jscript');}
-	function Shortcode_delphi($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'delphi');}
-	function Shortcode_pascal($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'pascal');}
-	function Shortcode_perl($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'perl');}
-	function Shortcode_php($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'php');}
-	function Shortcode_python($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'python');}
-	function Shortcode_ruby($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'ruby');}
-	function Shortcode_vb($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'vb');}
-	function Shortcode_vbnet($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'vb.net');}
-	function Shortcode_scala($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'scala');}
-	function Shortcode_sql($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'sql');}
-	function Shortcode_css($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'css');}
-	function Shortcode_xml($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'xml');}
-	function Shortcode_html($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'html');}
-	function Shortcode_xhtml($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'xhtml');}
-	function Shortcode_xslt($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'xslt');}
+	function shortcode_c($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'c');}
+	function shortcode_cpp($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'cpp');}
+	function shortcode_csharp($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'c-sharp');}
+	function shortcode_java($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'java');}
+	function shortcode_javascript($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'jscript');}
+	function shortcode_delphi($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'delphi');}
+	function shortcode_pascal($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'pascal');}
+	function shortcode_perl($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'perl');}
+	function shortcode_php($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'php');}
+	function shortcode_python($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'python');}
+	function shortcode_ruby($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'ruby');}
+	function shortcode_vb($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'vb');}
+	function shortcode_vbnet($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'vb.net');}
+	function shortcode_scala($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'scala');}
+	function shortcode_sql($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'sql');}
+	function shortcode_css($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'css');}
+	function shortcode_xml($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'xml');}
+	function shortcode_html($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'html');}
+	function shortcode_xhtml($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'xhtml');}
+	function shortcode_xslt($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'xslt');}
 
-	function Shortcode_bash($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'bash');}
-	function Shortcode_diff($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'diff');}
-	function Shortcode_groovy($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'groovy');}
-	function Shortcode_patch($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'patch');}
-	function Shortcode_plain($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'plain');}
-	function Shortcode_shell($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'shell');}
-	function Shortcode_text($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'plain');}
+	function shortcode_bash($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'bash');}
+	function shortcode_diff($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'diff');}
+	function shortcode_groovy($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'groovy');}
+	function shortcode_patch($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'patch');}
+	function shortcode_plain($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'plain');}
+	function shortcode_shell($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'shell');}
+	function shortcode_text($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'plain');}
 
-	function Shortcode_as3($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'as3');}
-	function Shortcode_coldfusion($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'coldfusion');}
-	function Shortcode_javafx($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'javafx');}
-	function Shortcode_erlang($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'erlang');}
-	function Shortcode_powershell($atts, $content = null) {return $this->Shortcode_Handler($atts, $content, 'powershell');}
+	function shortcode_as3($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'as3');}
+	function shortcode_coldfusion($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'coldfusion');}
+	function shortcode_javafx($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'javafx');}
+	function shortcode_erlang($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'erlang');}
+	function shortcode_powershell($atts, $content = null) {return $this->shortcode_handler($atts, $content, 'powershell');}
 
 	//**************************************************************************************
 	// parse shortcodes
@@ -644,6 +666,8 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 
 		$shortcode_tags = $shortcode_tags_org;
 
+		$this->parsed = true;
+
 		return $content;
 	}
 
@@ -651,13 +675,15 @@ class SyntaxHighlighter extends wokController {	/* Start Class */
 	// Add shortcodes
 	//**************************************************************************************
 	function add_shortcodes() {
-		add_shortcode('code', array(&$this, 'Shortcode_code'));
+		add_shortcode('code', array(&$this, 'shortcode_code'));
 		foreach ($this->target as $val) {
-			add_shortcode($val, array(&$this, 'Shortcode_' . strtolower($val)));
-			if (strtolower($val) !== $val)
-				add_shortcode(strtolower($val), array(&$this, 'Shortcode_' . strtolower($val)));
-			if (strtoupper($val) !== $val)
-				add_shortcode(strtoupper($val), array(&$this, 'Shortcode_' . strtolower($val)));
+			add_shortcode($val, array(&$this, 'shortcode_' . strtolower($val)));
+			if (strtolower($val) !== $val) {
+				add_shortcode(strtolower($val), array(&$this, 'shortcode_' . strtolower($val)));
+			}
+			if (strtoupper($val) !== $val) {
+				add_shortcode(strtoupper($val), array(&$this, 'shortcode_' . strtolower($val)));
+			}
 		}
 	}
 }
